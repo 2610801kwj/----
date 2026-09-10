@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>용산고 전자기학 Lab - 고성능 시뮬레이션</title>
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
@@ -12,16 +13,19 @@
     <style>
         :root {
             --navy-primary: #0A1B3A; --navy-secondary: #162B52; --navy-light: #234075;
-            --bg-color: #0F172A; --card-bg: #1E293B; --text-color: #F8FAFC;
-            --text-muted: #94A3B8; --accent-cyan: #06B6D4; --accent-amber: #F59E0B;
-            --accent-red: #EF4444; --accent-green: #10B981;
+            --bg-color: #0F172A; --card-bg: #1E293B; --text-color: #F8FAFC; --text-muted: #94A3B8;
+            --accent-cyan: #06B6D4; --accent-amber: #F59E0B; --accent-red: #EF4444; --accent-green: #10B981;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; min-height: 100vh; overscroll-behavior-y: none; }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', -apple-system, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; min-height: 100vh; }
+        
         header { background-color: var(--navy-primary); padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
-        .logo { font-size: 1.25rem; font-weight: 700; cursor: pointer; user-select: none; }
+        .logo { font-size: 1.25rem; font-weight: 700; cursor: pointer; transition: 0.2s; user-select: none; }
+        .logo:hover { opacity: 0.85; transform: scale(1.02); }
         .hamburger-btn { background: none; border: none; color: #FFF; font-size: 1.8rem; cursor: pointer; }
-        .nav-drawer { position: fixed; top: 0; right: -320px; width: 320px; height: 100%; background-color: var(--navy-secondary); box-shadow: -4px 0 15px rgba(0, 0, 0, 0.5); transition: right 0.3s; z-index: 200; display: flex; flex-direction: column; }
+
+        .nav-drawer { position: fixed; top: 0; right: -320px; width: 320px; height: 100%; background-color: var(--navy-secondary); box-shadow: -4px 0 15px rgba(0, 0, 0, 0.5); transition: right 0.3s ease-in-out; z-index: 200; display: flex; flex-direction: column; }
         .nav-drawer.active { right: 0; }
         .drawer-header { padding: 1.2rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
         .close-btn { background: none; border: none; color: #FFF; font-size: 1.5rem; cursor: pointer; }
@@ -29,24 +33,30 @@
         .menu-category { padding: 0.75rem 1.5rem 0.25rem; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); }
         .menu-item { display: block; padding: 0.8rem 2rem; color: #FFF; text-decoration: none; cursor: pointer; transition: 0.2s; }
         .menu-item:hover { background-color: var(--navy-light); color: var(--accent-cyan); }
+
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; z-index: 150; }
         .overlay.active { display: block; }
+
         main { flex: 1; max-width: 1100px; width: 100%; margin: 0 auto; padding: 1.5rem; }
         .content-card { background-color: var(--card-bg); border-radius: 12px; padding: 1.5rem; border: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; align-items: center; }
         .sim-container { width: 100%; display: flex; flex-direction: column; gap: 1.2rem; }
-        canvas.sim-canvas { background: #020617; border-radius: 10px; width: 100%; height: 280px; border: 1px solid rgba(255, 255, 255, 0.15); touch-action: none; cursor: grab; }
+        
+        canvas.sim-canvas { background: #020617; border-radius: 10px; width: 100%; height: 280px; border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: inset 0 0 20px rgba(0,0,0,0.8); cursor: grab; }
         canvas.sim-canvas:active { cursor: grabbing; }
+
         .controls-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; width: 100%; }
         .control-card { background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.08); padding: 1rem; border-radius: 8px; display: flex; flex-direction: column; gap: 0.5rem; }
         .control-card label { font-size: 0.88rem; color: var(--text-muted); display: flex; justify-content: space-between; }
         .control-card label span { color: var(--accent-cyan); font-weight: bold; }
         .control-card input[type="range"] { width: 100%; accent-color: var(--accent-cyan); cursor: pointer; }
+
         .btn-group { display: flex; gap: 0.5rem; width: 100%; margin-top: 0.5rem; }
-        .action-btn { flex: 1; padding: 0.6rem; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s; background: var(--navy-light); color: white; }
+        .action-btn { flex: 1; padding: 0.8rem; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s; background: var(--navy-light); color: white; }
         .action-btn:hover { background: var(--accent-cyan); color: #000; }
         .action-btn.active { background: var(--accent-cyan); color: #000; }
-        .action-btn.export { background: var(--accent-green); color: #000; }
-        .action-btn.export:hover { opacity: 0.8; }
+        .csv-btn { background: var(--accent-green); color: #fff; margin-top: 0.5rem; }
+        .csv-btn:hover { background: #059669; color: #fff; }
+
         .visual-meters { width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
         .meter-box { background: rgba(15, 23, 42, 0.8); padding: 0.9rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); }
         .meter-title { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.4rem; }
@@ -54,44 +64,489 @@
         .meter-bar-fill { height: 100%; width: 0%; transition: width 0.1s linear; background: linear-gradient(90deg, var(--accent-cyan), var(--accent-amber)); }
         .meter-value { font-size: 1.15rem; font-weight: bold; margin-top: 0.3rem; color: #FFF; text-align: right; }
         .meter-sub-info { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.5rem; display: flex; justify-content: space-between; border-top: 1px dashed rgba(255, 255, 255, 0.1); padding-top: 0.4rem; }
-        .chart-container { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 1rem; width: 100%; height: 260px; margin-top: 0.5rem; }
+        .meter-sub-info span b { font-weight: 600; }
+
+        .chart-container { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 1rem; width: 100%; height: 260px; margin-top: 0.5rem; position: relative; }
+
         .home-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; width: 100%; margin-top: 0.5rem; }
-        .home-card { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.08); padding: 1.5rem; border-radius: 10px; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; gap: 0.5rem; }
-        .home-card:hover { transform: translateY(-3px); border-color: var(--accent-cyan); box-shadow: 0 4px 15px rgba(6, 182, 212, 0.2); }
-        .home-card h3 { color: var(--accent-cyan); font-size: 1.15rem; }
-        .home-card p { font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; }
-        footer { margin-top: auto; border-top: 1px solid rgba(255, 255, 255, 0.1); padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.85rem; background: var(--navy-primary); }
+        .home-card { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 1.5rem; cursor: pointer; transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease; display: flex; flex-direction: column; justify-content: space-between; }
+        .home-card:hover { transform: translateY(-5px); border-color: var(--accent-cyan); box-shadow: 0 10px 25px rgba(6, 182, 212, 0.15); }
+        .home-card-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+        .home-card-icon { font-size: 1.8rem; }
+        .home-card-title { font-size: 1.15rem; font-weight: 700; }
+        .home-card-desc { font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1.2rem; }
+        .home-card-btn { font-size: 0.85rem; font-weight: 700; color: var(--accent-cyan); }
+
+        .formulas-container { width: 100%; display: flex; flex-direction: column; gap: 2rem; }
+        .formula-section-title { font-size: 1.2rem; font-weight: 700; color: var(--accent-cyan); border-bottom: 2px solid rgba(6, 182, 212, 0.3); padding-bottom: 0.5rem; margin-bottom: 1rem; }
+        .formula-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.2rem; width: 100%; }
+        .formula-card { background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 1.2rem; display: flex; flex-direction: column; }
+        .formula-card-badge { align-self: flex-start; font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 4px; margin-bottom: 0.6rem; background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); }
+        .formula-card h4 { font-size: 0.98rem; margin-bottom: 0.8rem; }
+        .math-display-box { background: #020617; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 0.9rem 0.5rem; text-align: center; margin-bottom: 1rem; color: var(--accent-green); }
+        
+        footer { background-color: var(--navy-primary); color: var(--text-muted); padding: 1.5rem; margin-top: auto; font-size: 0.85rem; border-top: 1px solid rgba(255, 255, 255, 0.1); }
+        .footer-container { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; }
+        .footer-bottom { text-align: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); }
     </style>
 </head>
 <body>
     <header>
         <div class="logo" onclick="loadContent('home')">⚡ 용산고 전자기학 Lab</div>
-        <button class="hamburger-btn" onclick="toggleMenu()">≡</button>
+        <button class="hamburger-btn" id="hamburgerBtn">☰</button>
     </header>
-    <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
-    <nav class="nav-drawer" id="drawer">
-        <div class="drawer-header">
-            <h2 style="font-size: 1.1rem; color: #FFF;">메뉴</h2>
-            <button class="close-btn" onclick="toggleMenu()">×</button>
-        </div>
+
+    <nav class="nav-drawer" id="navDrawer">
+        <div class="drawer-header"><span>시뮬레이션 & 분석</span><button class="close-btn" id="closeBtn">&times;</button></div>
         <ul class="menu-list">
-            <태블릿 환경의 웹 브라우저에는 자체적인 F12(개발자 도구) 기능이 내장되어 있지 않으므로, PC와 연결하는 원격 디버깅을 사용해야 합니다. 추가로 요청하신 그래프 데이터 내보내기 기능은 프론트엔드(JavaScript) 단에서 이미지나 데이터 파일 형식으로 다운로드하도록 구현할 수 있습니다.
+            <li class="menu-category">메인</li>
+            <li><a class="menu-item" onclick="loadContent('home')">🏠 홈 메인화면</a></li>
+            <li class="menu-category">시뮬레이션</li>
+            <li><a class="menu-item" onclick="loadContent('faraday')">⚡ 패러데이 전자기 유도</a></li>
+            <li><a class="menu-item" onclick="loadContent('braking')">🧲 전자기 제동 (와류 감속)</a></li>
+            <li class="menu-category">데이터 분석</li>
+            <li><a class="menu-item" onclick="loadContent('wpt')">📡 무선 전력 전송 분석</a></li>
+            <li class="menu-category">자료실</li>
+            <li><a class="menu-item" onclick="loadContent('formulas')">📐 전자기학 핵심 공식</a></li>
+        </ul>
+    </nav>
+    <div class="overlay" id="overlay"></div>
 
-**태블릿 디버깅 (F12 대체 방법)**
-* **안드로이드 (Chrome):** 기기를 PC에 USB로 연결한 뒤, PC 크롬 브라우저 주소창에 `chrome://inspect/#devices`를 입력하면 태블릿에서 실행 중인 웹 페이지의 요소와 콘솔을 PC 화면에서 디버깅할 수 있습니다.
-* **아이패드 (Safari):** 기기를 Mac과 케이블로 연결한 뒤, Mac의 Safari 상단 메뉴에서 **개발자용 -> [기기 이름]**을 선택하여 웹 검사기를 실행합니다.
+    <main>
+        <div class="content-card">
+            <h2 id="pageTitle" style="margin-bottom: 0.5rem; color: var(--accent-cyan);"></h2>
+            <p id="pageDesc" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.2rem;"></p>
+            <div id="mainDisplay" style="width: 100%;"></div>
+        </div>
+    </main>
 
-**그래프 결과값 파일로 저장 (내보내기) 기능 구현**
-사용 중인 라이브러리(Chart.js, ECharts 등)에 따라 내장된 내보내기 API가 있을 수 있으며, 일반적인 웹 환경에서는 다음 두 가지 방식을 주로 사용합니다.
+    <footer>
+        <div class="footer-container">
+            <div><h4 style="color: #FFF;">용산고등학교 전자기학 Lab</h4><p>2026학년도 1학년 8반 전자기학 물리 탐구 프로젝트</p></div>
+            <div><h4 style="color: #FFF;">제작자 정보</h4><p>권우진, 정나후, 조문규, 김민준</p></div>
+        </div>
+        <div class="footer-bottom">&copy; 2026 Yongsan High School 1-8. All rights reserved.</div>
+    </footer>
 
-**1. 이미지(PNG/JPG)로 저장**
-HTML `<canvas>`로 그려진 그래프 화면 자체를 캡처하여 저장하는 방식입니다.
-* Canvas 객체에서 `toDataURL('image/png')` 메서드를 호출하여 렌더링된 이미지의 URL 데이터를 추출합니다.
-* 자바스크립트로 보이지 않는 `<a>` 태그를 생성한 뒤, `href`에 추출한 URL을 넣고 `download` 속성에 원하는 파일명(예: `chart_result.png`)을 지정합니다.
-* 해당 태그에 `click()` 이벤트를 강제로 발생시켜 사용자 기기에 파일이 다운로드되게 합니다.
+    <script>
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const closeBtn = document.getElementById('closeBtn');
+        const navDrawer = document.getElementById('navDrawer');
+        const overlay = document.getElementById('overlay');
+        function toggleMenu() { navDrawer.classList.toggle('active'); overlay.classList.toggle('active'); }
+        hamburgerBtn.onclick = toggleMenu; closeBtn.onclick = toggleMenu; overlay.onclick = toggleMenu;
 
-**2. 원본 데이터(CSV)로 저장**
-그래프를 그리는 데 사용된 X축, Y축 등의 수치 데이터를 엑셀 등에서 열 수 있도록 내보내는 방식입니다.
-* 자바스크립트 내의 결과값 배열(Array) 데이터를 쉼표(,)로 구분된 CSV 형식의 문자열로 가공합니다.
-* `new Blob([데이터], { type: 'text/csv;charset=utf-8;' })` 코드를 사용해 문자열을 파일 객체(Blob)로 변환합니다.
-* `URL.createObjectURL(blob)` 함수로 다운로드용 링크를 생성한 뒤, `<a>` 태그의 `download` 속성을 이용해 `result_data.csv` 형태로 저장합니다.
+        let animId = null;
+        let activeChart = null; 
+
+        function clearAnim() {
+            if (animId) cancelAnimationFrame(animId);
+            if (activeChart) activeChart.destroy();
+        }
+
+        Chart.defaults.color = '#94A3B8';
+        Chart.defaults.borderColor = 'rgba(255,255,255,0.1)';
+
+        // CSV 추출 공통 함수
+        function exportCSV() {
+            if (!activeChart) { alert("출력할 데이터가 없습니다."); return; }
+            let csv = "data:text/csv;charset=utf-8,\uFEFF"; 
+            let labels = activeChart.data.labels;
+            let datasets = activeChart.data.datasets;
+
+            let headers = ["Index/Label"];
+            datasets.forEach(ds => headers.push(ds.label));
+            csv += headers.join(",") + "\n";
+
+            for (let i = 0; i < labels.length; i++) {
+                let row = [labels[i] || (i + 1)];
+                datasets.forEach(ds => {
+                    row.push(ds.data[i] !== undefined ? ds.data[i].toFixed(2) : 0);
+                });
+                csv += row.join(",") + "\n";
+            }
+
+            const link = document.createElement("a");
+            link.href = encodeURI(csv);
+            link.download = `simulation_data_${Date.now()}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function loadContent(type) {
+            clearAnim();
+            const title = document.getElementById('pageTitle');
+            const desc = document.getElementById('pageDesc');
+            const display = document.getElementById('mainDisplay');
+
+            if (type === 'home') {
+                title.innerText = "⚡ 용산고 전자기학 Lab 메인 대시보드";
+                desc.innerText = "탐구하고자 하는 시뮬레이션, 데이터 분석 모듈, 또는 핵심 공식 모음을 선택하세요.";
+                display.innerHTML = `
+                    <div class="home-grid">
+                        <div class="home-card" onclick="loadContent('faraday')"><div class="home-card-header"><span class="home-card-icon">⚡</span><span class="home-card-title">패러데이 전자기 유도</span></div><p class="home-card-desc">자석의 왕복/마우스 운동 및 변수에 따른 유도 기전력(V_emf) 실시간 시각화.</p><div class="home-card-btn">시뮬레이션 시작 →</div></div>
+                        <div class="home-card" onclick="loadContent('braking')"><div class="home-card-header"><span class="home-card-icon">🧲</span><span class="home-card-title">전자기 제동 (와류)</span></div><p class="home-card-desc">와류(Eddy Current)에 의한 감속력과 속도 변화를 그래프로 실시간 관찰.</p><div class="home-card-btn">시뮬레이션 시작 →</div></div>
+                        <div class="home-card" onclick="loadContent('wpt')"><div class="home-card-header"><span class="home-card-icon">📡</span><span class="home-card-title">무선 전력 전송 분석</span></div><p class="home-card-desc">송수신 거리, 품질 계수에 따른 전력 전달 효율을 그래프로 심층 연산합니다.</p><div class="home-card-btn">데이터 분석 →</div></div>
+                        <div class="home-card" onclick="loadContent('formulas')"><div class="home-card-header"><span class="home-card-icon">📐</span><span class="home-card-title">핵심 공식 모음</span></div><p class="home-card-desc">가상 실험 및 연산에 적용된 전자기학 주요 수식과 파라미터 정의.</p><div class="home-card-btn" style="color: var(--accent-amber);">공식 확인 →</div></div>
+                    </div>
+                `;
+            } else if (type === 'faraday') {
+                title.innerText = "⚡ 패러데이 전자기 유도 시뮬레이션";
+                desc.innerText = "자석을 마우스로 직접 조작하거나 자동 속도를 설정하여 실시간 기전력(EMF) 발생 그래프를 확인하세요.";
+                display.innerHTML = `
+                    <div class="sim-container">
+                        <canvas id="canvas" class="sim-canvas" width="800" height="280"></canvas>
+                        <div class="visual-meters">
+                            <div class="meter-box"><div class="meter-title">실시간 유도 기전력 (V_emf)</div><div class="meter-bar-bg"><div class="meter-bar-fill" id="emfMeter"></div></div><div class="meter-value" id="emfValue">0.0 V</div><div class="meter-sub-info"><span>최고: <b id="emfMaxVal" style="color:var(--accent-cyan);">0.0 V</b></span></div></div>
+                            <div class="meter-box"><div class="meter-title">LED 발광 출력</div><div class="meter-bar-bg"><div class="meter-bar-fill" id="ledMeter" style="background:var(--accent-amber);"></div></div><div class="meter-value" id="ledValue">0 %</div><div class="meter-sub-info"><span>최고: <b id="ledMaxVal" style="color:var(--accent-amber);">0 %</b></span></div></div>
+                        </div>
+                        <div class="chart-container"><canvas id="simChart"></canvas></div>
+                        <div class="controls-grid">
+                            <div class="control-card"><label>조작 모드</label><div class="btn-group"><button class="action-btn active" id="btnAuto">자동 반복</button><button class="action-btn" id="btnManual">마우스 드래그</button></div></div>
+                            <div class="control-card"><label>자동 속도 (v): <span id="vTxt">15</span> m/s</label><input type="range" id="vIn" min="1" max="50" value="15"></div>
+                            <div class="control-card"><label>코일 감은 수 (N): <span id="nTxt">200</span> 회</label><input type="range" id="nIn" min="10" max="500" value="200" step="10"></div>
+                            <div class="control-card"><label>자기장 세기 (B0): <span id="bTxt">3.0</span> T</label><input type="range" id="bIn" min="0.5" max="10.0" value="3.0" step="0.5"></div>
+                        </div>
+                        <button class="action-btn csv-btn" onclick="exportCSV()">📥 차트 데이터 CSV 내보내기</button>
+                    </div>
+                `;
+                initFaraday();
+            } else if (type === 'braking') {
+                title.innerText = "🧲 전자기 제동 (와류 감속) 시뮬레이션";
+                desc.innerText = "자기장 영역 진입 시 발생하는 와류 제동력과 속도 감소를 실시간 그래프로 분석합니다.";
+                display.innerHTML = `
+                    <div class="sim-container">
+                        <canvas id="canvas" class="sim-canvas" style="cursor:default;" width="800" height="280"></canvas>
+                        <div class="visual-meters">
+                            <div class="meter-box"><div class="meter-title">실시간 속도 (v)</div><div class="meter-bar-bg"><div class="meter-bar-fill" id="speedMeter" style="background:var(--accent-cyan);"></div></div><div class="meter-value" id="speedValue">0.0 m/s</div><div class="meter-sub-info"><span>진입 최고: <b id="speedMaxVal" style="color:var(--accent-cyan);">0.0 m/s</b></span></div></div>
+                            <div class="meter-box"><div class="meter-title">와류 제동력 (F_EM)</div><div class="meter-bar-bg"><div class="meter-bar-fill" id="forceMeter" style="background:var(--accent-red);"></div></div><div class="meter-value" id="forceValue">0.0 N</div><div class="meter-sub-info"><span>최대 제동력: <b id="forceMaxVal" style="color:var(--accent-red);">0.0 N</b></span></div></div>
+                        </div>
+                        <div class="chart-container"><canvas id="simChart"></canvas></div>
+                        <div class="controls-grid">
+                            <div class="control-card"><label>초기 진입 속도 (v0): <span id="v0Txt">40</span> m/s</label><input type="range" id="v0In" min="5" max="100" value="40"></div>
+                            <div class="control-card"><label>자기장 (B): <span id="bBrakeTxt">5.0</span> T</label><input type="range" id="bBrakeIn" min="0.5" max="10.0" value="5.0" step="0.5"></div>
+                            <div class="control-card"><label>도체 질량 (m): <span id="mTxt">2.0</span> kg</label><input type="range" id="mIn" min="0.5" max="10.0" value="2.0" step="0.5"></div>
+                        </div>
+                        <div style="display: flex; gap: 1rem; width: 100%;">
+                            <button class="action-btn" style="flex: 2;" onclick="restartBraking()">재발사 (시뮬레이션 리셋)</button>
+                            <button class="action-btn csv-btn" style="flex: 1; margin-top: 0;" onclick="exportCSV()">📥 CSV 다운로드</button>
+                        </div>
+                    </div>
+                `;
+                initBraking();
+            } else if (type === 'wpt') {
+                title.innerText = "📡 무선 전력 전송 효율 심층 분석";
+                desc.innerText = "송수신 거리(d) 변동에 따른 전력 전송 효율 곡선을 그래프로 즉시 확인하세요.";
+                display.innerHTML = `
+                    <div class="sim-container">
+                        <div class="controls-grid">
+                            <div class="control-card"><label>현재 거리 (d): <span id="wptDTxt">10</span> cm</label><input type="range" id="wptD" min="1" max="80" value="10" oninput="calcWPT()"></div>
+                            <div class="control-card"><label>품질 계수 (Q): <span id="wptQTxt">100</span></label><input type="range" id="wptQ" min="10" max="400" value="100" step="10" oninput="calcWPT()"></div>
+                            <div class="control-card"><label>입력 전력 (P_in): <span id="wptPTxt">50</span> W</label><input type="range" id="wptP" min="5" max="200" value="50" step="5" oninput="calcWPT()"></div>
+                        </div>
+                        <div class="visual-meters">
+                            <div class="meter-box"><div class="meter-title">전송 효율 (η)</div><div class="meter-bar-bg"><div class="meter-bar-fill" id="etaBar" style="background:var(--accent-green);"></div></div><div class="meter-value" id="etaVal">0 %</div></div>
+                            <div class="meter-box"><div class="meter-title">수신 전력 (P_out)</div><div class="meter-bar-bg"><div class="meter-bar-fill" id="pOutBar" style="background:var(--accent-cyan);"></div></div><div class="meter-value" id="pOutVal">0 W</div></div>
+                            <div class="meter-box"><div class="meter-title">코일 발열 손실</div><div class="meter-bar-bg"><div class="meter-bar-fill" id="pLossBar" style="background:var(--accent-red);"></div></div><div class="meter-value" id="pLossVal">0 W</div></div>
+                        </div>
+                        <div class="chart-container"><canvas id="simChart"></canvas></div>
+                        <button class="action-btn csv-btn" onclick="exportCSV()">📥 차트 데이터 CSV 내보내기</button>
+                    </div>
+                `;
+                initWPTChart();
+                calcWPT();
+            } else if (type === 'formulas') {
+                title.innerText = "📐 전자기학 핵심 공식 & 파라미터 모음";
+                desc.innerText = "가상 실험실 및 연산 알고리즘에 적용된 물리/회로 수식입니다.";
+                display.innerHTML = `
+                    <div class="formulas-container">
+                        <div>
+                            <div class="formula-section-title"><span>🧲</span> 전자기식 제동 시스템 (AAG)</div>
+                            <div class="formula-grid">
+                                <div class="formula-card"><span class="formula-card-badge">역학</span><h4>운동 에너지 (Kinetic Energy)</h4><div class="math-display-box">$$E_k = \\frac{1}{2}m v^2$$</div></div>
+                                <div class="formula-card"><span class="formula-card-badge">전자기 유도</span><h4>와류 감속력 (Eddy Current)</h4><div class="math-display-box">$$F_{\\text{EM}} = -k \\cdot B^2 \\cdot \\sigma \\cdot v$$</div></div>
+                                <div class="formula-card"><span class="formula-card-badge">제어 공학</span><h4>가변 감속 제어</h4><div class="math-display-box">$$F_{\\text{EM}}(t) = -c(t) \\cdot v(t)$$</div></div>
+                                <div class="formula-card"><span class="formula-card-badge">열/에너지</span><h4>순간 소모 전력</h4><div class="math-display-box">$$P(t) = F_{\\text{EM}}(t) \\cdot v(t)$$</div></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="formula-section-title" style="color:var(--accent-amber);border-bottom-color:rgba(245,158,11,0.3);"><span>📡</span> 무선 전력 전송 시스템 (WPT)</div>
+                            <div class="formula-grid">
+                                <div class="formula-card"><span class="formula-card-badge amber">전력 효율</span><h4>전송 효율 (Efficiency)</h4><div class="math-display-box">$$\\eta = \\frac{P_{\\text{out}}}{P_{\\text{in}}} \\times 100$$</div></div>
+                                <div class="formula-card"><span class="formula-card-badge amber">회로 공진</span><h4>고유 공진 주파수</h4><div class="math-display-box">$$f_0 = \\frac{1}{2\\pi\\sqrt{L C}}$$</div></div>
+                                <div class="formula-card"><span class="formula-card-badge amber">자기 결합</span><h4>결합 계수</h4><div class="math-display-box">$$k = \\frac{M}{\\sqrt{L_1 L_2}}$$</div></div>
+                                <div class="formula-card"><span class="formula-card-badge amber">품질 계수</span><h4>Q-Factor</h4><div class="math-display-box">$$Q = \\frac{2\\pi f L}{R}$$</div></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                setTimeout(() => { if (window.renderMathInElement) renderMathInElement(document.getElementById('mainDisplay'), { delimiters: [{left:'$$', right:'$$', display:true}, {left:'$', right:'$', display:false}]}); }, 50);
+            }
+            if (navDrawer.classList.contains('active')) toggleMenu();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // --- 1. 패러데이 시뮬레이션 ---
+        function initFaraday() {
+            const cvs = document.getElementById('canvas');
+            const ctx = cvs.getContext('2d');
+            let posX = 150, dir = 1;
+            let maxEmf = 0, maxLed = 0;
+            
+            let isManual = false, isDragging = false;
+            let manualV = 0, lastPosX = posX; 
+
+            const vIn = document.getElementById('vIn');
+            const nIn = document.getElementById('nIn');
+            const bIn = document.getElementById('bIn');
+            const btnAuto = document.getElementById('btnAuto');
+            const btnManual = document.getElementById('btnManual');
+
+            btnAuto.onclick = () => { isManual = false; btnAuto.classList.add('active'); btnManual.classList.remove('active'); vIn.disabled = false; };
+            btnManual.onclick = () => { isManual = true; btnManual.classList.add('active'); btnAuto.classList.remove('active'); vIn.disabled = true; manualV = 0; };
+
+            // 좌표 스케일링 보정
+            cvs.addEventListener('mousedown', (e) => {
+                if(!isManual) return;
+                const rect = cvs.getBoundingClientRect();
+                const scaleX = cvs.width / rect.width; 
+                const mx = (e.clientX - rect.left) * scaleX; 
+                if(Math.abs(mx - posX) < 80) { isDragging = true; }
+            });
+            window.addEventListener('mousemove', (e) => {
+                if(isDragging) {
+                    const rect = cvs.getBoundingClientRect();
+                    const scaleX = cvs.width / rect.width;
+                    const mx = (e.clientX - rect.left) * scaleX;
+                    posX = Math.max(50, Math.min(750, mx));
+                }
+            });
+            window.addEventListener('mouseup', () => { isDragging = false; });
+
+            const ctxChart = document.getElementById('simChart').getContext('2d');
+            let chartData = Array(60).fill(0), chartLabels = Array(60).fill('');
+            activeChart = new Chart(ctxChart, {
+                type: 'line',
+                data: { labels: chartLabels, datasets: [{ label: '유도 기전력 (V)', data: chartData, borderColor: '#06B6D4', backgroundColor: 'rgba(6,182,212,0.1)', fill: true, tension: 0.2, pointRadius: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, animation: false, scales: { y: { min: 0, max: 40 } } }
+            });
+
+            function resetMax() { maxEmf = 0; maxLed = 0; }
+            vIn.oninput = resetMax; nIn.oninput = resetMax; bIn.oninput = resetMax;
+
+            let frameCount = 0;
+
+            function draw() {
+                const autoV = parseFloat(vIn.value);
+                const N = parseFloat(nIn.value);
+                const B = parseFloat(bIn.value);
+                
+                // 프레임당 위치 변화량으로 드래그 속도 계산 (마우스를 멈추면 즉시 0 처리)
+                if (isManual) {
+                    manualV = Math.abs(posX - lastPosX) * 20; 
+                    lastPosX = posX;
+                }
+
+                document.getElementById('vTxt').innerText = isManual ? manualV.toFixed(1) : autoV;
+                document.getElementById('nTxt').innerText = N;
+                document.getElementById('bTxt').innerText = B;
+
+                if (!isManual) {
+                    posX += (autoV * 0.25) * dir;
+                    if (posX > 650 || posX < 150) dir *= -1;
+                }
+
+                ctx.clearRect(0, 0, cvs.width, cvs.height);
+                const coilX = 400, coilY = 140;
+                
+                const currentSpeed = isManual ? manualV : autoV;
+                const dist = Math.abs(posX - coilX);
+                const fluxGradient = Math.max(0, 1 - dist / 150);
+                
+                const emf = Math.abs(currentSpeed * (N / 50) * B * fluxGradient * 0.15);
+                if (emf > maxEmf) maxEmf = emf;
+
+                // 렌더링
+                ctx.lineWidth = 1;
+                for (let i = -3; i <= 3; i++) {
+                    ctx.strokeStyle = `rgba(6, 182, 212, ${0.1 + fluxGradient * 0.4})`;
+                    ctx.beginPath(); ctx.ellipse(posX, coilY, 60 + Math.abs(i) * 20, 20 + Math.abs(i) * 15, 0, 0, Math.PI * 2); ctx.stroke();
+                }
+
+                ctx.lineWidth = 4; ctx.strokeStyle = '#D97706';
+                const loops = Math.floor(N / 25) + 5;
+                for (let i = 0; i < loops; i++) {
+                    ctx.beginPath(); ctx.ellipse(coilX - (loops * 3) + (i * 6), coilY, 12, 50, 0, 0, Math.PI * 2); ctx.stroke();
+                }
+
+                ctx.lineWidth = 2; ctx.strokeStyle = '#64748B';
+                ctx.beginPath(); ctx.moveTo(coilX-50, coilY-50); ctx.lineTo(coilX-50, 40); ctx.lineTo(coilX+50, 40); ctx.lineTo(coilX+50, coilY-50); ctx.stroke();
+
+                const glow = Math.min(1, emf / 25);
+                if (glow > 0.05) {
+                    const grad = ctx.createRadialGradient(coilX, 40, 5, coilX, 40, 40);
+                    grad.addColorStop(0, `rgba(245, 158, 11, ${glow})`); grad.addColorStop(1, 'rgba(245, 158, 11, 0)');
+                    ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(coilX, 40, 40, 0, Math.PI * 2); ctx.fill();
+                }
+                ctx.fillStyle = glow > 0.1 ? '#F59E0B' : '#475569';
+                ctx.beginPath(); ctx.arc(coilX, 40, 10, 0, Math.PI * 2); ctx.fill();
+
+                ctx.fillStyle = '#EF4444'; ctx.fillRect(posX - 60, coilY - 20, 60, 40);
+                ctx.fillStyle = '#3B82F6'; ctx.fillRect(posX, coilY - 20, 60, 40);
+                ctx.fillStyle = '#FFF'; ctx.font = 'bold 16px sans-serif';
+                ctx.fillText('N', posX - 40, coilY + 6); ctx.fillText('S', posX + 20, coilY + 6);
+
+                document.getElementById('emfValue').innerText = `${emf.toFixed(1)} V`;
+                document.getElementById('emfMeter').style.width = `${Math.min(100, (emf / 40) * 100)}%`;
+                document.getElementById('emfMaxVal').innerText = `${maxEmf.toFixed(1)} V`;
+
+                const ledPct = Math.min(100, Math.round(glow * 100));
+                if (ledPct > maxLed) maxLed = ledPct;
+                document.getElementById('ledValue').innerText = `${ledPct} %`;
+                document.getElementById('ledMeter').style.width = `${ledPct}%`;
+                document.getElementById('ledMaxVal').innerText = `${maxLed} %`;
+
+                if(frameCount++ % 3 === 0) {
+                    chartData.push(emf); chartData.shift();
+                    activeChart.update();
+                }
+
+                animId = requestAnimationFrame(draw);
+            }
+            draw();
+        }
+
+        // --- 2. 전자기 제동 시뮬레이션 ---
+        let brakePosX = 50, brakeV = 40;
+        function initBraking() {
+            const cvs = document.getElementById('canvas');
+            const ctx = cvs.getContext('2d');
+            brakePosX = 50;
+            let maxForce = 0;
+            const v0In = document.getElementById('v0In');
+            const bBrakeIn = document.getElementById('bBrakeIn');
+            const mIn = document.getElementById('mIn');
+
+            const ctxChart = document.getElementById('simChart').getContext('2d');
+            let dataSpeed = [], dataForce = [], labels = [];
+            for(let i=0; i<100; i++) { dataSpeed.push(0); dataForce.push(0); labels.push(''); }
+            
+            activeChart = new Chart(ctxChart, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: '속도 (m/s)', data: dataSpeed, borderColor: '#06B6D4', yAxisID: 'y' },
+                        { label: '제동력 (N)', data: dataForce, borderColor: '#EF4444', yAxisID: 'y1' }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, animation: false, elements:{point:{radius:0}},
+                    scales: {
+                        y: { type: 'linear', display: true, position: 'left', min: 0, max: 100 },
+                        y1: { type: 'linear', display: true, position: 'right', min: 0, max: 150, grid: { drawOnChartArea: false } }
+                    }
+                }
+            });
+
+            function draw() {
+                const v0 = parseFloat(v0In.value);
+                const B = parseFloat(bBrakeIn.value);
+                const m = parseFloat(mIn.value);
+                document.getElementById('v0Txt').innerText = v0; document.getElementById('bBrakeTxt').innerText = B; document.getElementById('mTxt').innerText = m;
+
+                const bStart = 300, bEnd = 550;
+                let force = 0;
+
+                if (brakePosX >= bStart && brakePosX <= bEnd) {
+                    force = (Math.pow(B, 2) * brakeV * 0.12);
+                    brakeV = Math.max(0.5, brakeV - (force / m) * 0.03);
+                }
+
+                if (force > maxForce) maxForce = force;
+                brakePosX += brakeV * 0.2;
+                if (brakePosX > 750) { brakePosX = 50; brakeV = v0; maxForce = 0; }
+
+                ctx.clearRect(0, 0, cvs.width, cvs.height);
+                ctx.fillStyle = 'rgba(6, 182, 212, 0.12)'; ctx.fillRect(bStart, 40, bEnd - bStart, 200);
+                ctx.strokeStyle = '#06B6D4'; ctx.lineWidth = 2; ctx.setLineDash([6, 6]); ctx.strokeRect(bStart, 40, bEnd - bStart, 200); ctx.setLineDash([]);
+
+                const plateWidth = 70, plateY = 100;
+                ctx.fillStyle = '#94A3B8'; ctx.fillRect(brakePosX, plateY, plateWidth, 80);
+
+                if (force > 0.5) {
+                    ctx.strokeStyle = '#EF4444'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(brakePosX+35, plateY+40, 20, 0, Math.PI*1.7); ctx.stroke();
+                }
+
+                document.getElementById('speedValue').innerText = `${brakeV.toFixed(1)} m/s`;
+                document.getElementById('speedMaxVal').innerText = `${v0.toFixed(1)} m/s`;
+                document.getElementById('forceValue').innerText = `${force.toFixed(1)} N`;
+                document.getElementById('forceMaxVal').innerText = `${maxForce.toFixed(1)} N`;
+
+                dataSpeed.push(brakeV); dataSpeed.shift();
+                dataForce.push(force); dataForce.shift();
+                activeChart.update();
+
+                animId = requestAnimationFrame(draw);
+            }
+            draw();
+        }
+        function restartBraking() { brakePosX = 50; brakeV = parseFloat(document.getElementById('v0In').value); }
+
+        // --- 3. 무선 전력 전송 연산 (WPT) ---
+        function initWPTChart() {
+            const ctxChart = document.getElementById('simChart').getContext('2d');
+            let labels = [], data = [];
+            for(let d=1; d<=80; d+=2) { labels.push(d); data.push(0); }
+            
+            activeChart = new Chart(ctxChart, {
+                type: 'line',
+                data: { labels: labels, datasets: [
+                    { label: '거리별 전송 효율 (%)', data: data, borderColor: '#10B981', tension: 0.3 },
+                    { label: '현재 설정 위치', data: [], pointBackgroundColor: '#F59E0B', pointRadius: 6, showLine: false }
+                ]},
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 100 }, x: { title: {display:true, text:'거리 (cm)', color:'#fff'}} } }
+            });
+        }
+
+        function calcWPT() {
+            const d = parseFloat(document.getElementById('wptD').value);
+            const Q = parseFloat(document.getElementById('wptQ').value);
+            const Pin = parseFloat(document.getElementById('wptP').value);
+            document.getElementById('wptDTxt').innerText = d; document.getElementById('wptQTxt').innerText = Q; document.getElementById('wptPTxt').innerText = Pin;
+
+            function getEta(dist, q) {
+                const k = 0.9 * Math.pow(1 + Math.pow(dist / 6, 2), -1.5);
+                const kQ = k * q;
+                return (Math.pow(kQ, 2) / Math.pow(1 + Math.sqrt(1 + Math.pow(kQ, 2)), 2)) * 100;
+            }
+            const eta = getEta(d, Q);
+            const Pout = Pin * (eta / 100);
+            const Ploss = Pin - Pout;
+
+            document.getElementById('etaVal').innerText = `${eta.toFixed(1)} %`;
+            document.getElementById('etaBar').style.width = `${eta}%`;
+            document.getElementById('pOutVal').innerText = `${Pout.toFixed(1)} W`;
+            document.getElementById('pOutBar').style.width = `${(Pout / Pin) * 100}%`;
+            document.getElementById('pLossVal').innerText = `${Ploss.toFixed(1)} W`;
+            document.getElementById('pLossBar').style.width = `${(Ploss / Pin) * 100}%`;
+
+            if(activeChart) {
+                let curveData = [];
+                let currentPointData = Array(40).fill(null);
+                
+                for(let i=1; i<=80; i+=2) {
+                    curveData.push(getEta(i, Q));
+                    if(Math.abs(i - d) <= 1) currentPointData[(i-1)/2] = eta; 
+                }
+                activeChart.data.datasets[0].data = curveData;
+                activeChart.data.datasets[1].data = currentPointData;
+                activeChart.update();
+            }
+        }
+
+        window.onload = () => loadContent('home');
+    </script>
+</body>
+</html>
