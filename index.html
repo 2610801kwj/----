@@ -15,6 +15,7 @@
             --navy-primary: #0A1B3A; --navy-secondary: #162B52; --navy-light: #234075;
             --bg-color: #0F172A; --card-bg: #1E293B; --text-color: #F8FAFC; --text-muted: #94A3B8;
             --accent-cyan: #06B6D4; --accent-amber: #F59E0B; --accent-red: #EF4444; --accent-green: #10B981;
+            --accent-blue: #0284C7;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', -apple-system, sans-serif; }
@@ -51,11 +52,15 @@
         .control-card input[type="range"] { width: 100%; accent-color: var(--accent-cyan); cursor: pointer; }
 
         .btn-group { display: flex; gap: 0.5rem; width: 100%; margin-top: 0.5rem; }
-        .action-btn { flex: 1; padding: 0.8rem; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s; background: var(--navy-light); color: white; }
+        .export-btn-group { display: flex; gap: 0.5rem; width: 100%; margin-top: 0.5rem; flex-wrap: wrap; }
+        
+        .action-btn { flex: 1; padding: 0.8rem; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s; background: var(--navy-light); color: white; min-width: 140px; }
         .action-btn:hover { background: var(--accent-cyan); color: #000; }
         .action-btn.active { background: var(--accent-cyan); color: #000; }
-        .csv-btn { background: var(--accent-green); color: #fff; margin-top: 0.5rem; }
+        .csv-btn { background: var(--accent-green); color: #fff; }
         .csv-btn:hover { background: #059669; color: #fff; }
+        .img-btn { background: var(--accent-blue); color: #fff; }
+        .img-btn:hover { background: #0369A1; color: #fff; }
 
         .visual-meters { width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
         .meter-box { background: rgba(15, 23, 42, 0.8); padding: 0.9rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); }
@@ -147,7 +152,7 @@
         Chart.defaults.color = '#94A3B8';
         Chart.defaults.borderColor = 'rgba(255,255,255,0.1)';
 
-        // CSV 추출 공통 함수
+        // CSV 데이터 추출 공통 함수
         function exportCSV() {
             if (!activeChart) { alert("출력할 데이터가 없습니다."); return; }
             let csv = "data:text/csv;charset=utf-8,\uFEFF"; 
@@ -161,7 +166,7 @@
             for (let i = 0; i < labels.length; i++) {
                 let row = [labels[i] || (i + 1)];
                 datasets.forEach(ds => {
-                    row.push(ds.data[i] !== undefined ? ds.data[i].toFixed(2) : 0);
+                    row.push(ds.data[i] !== undefined ? (typeof ds.data[i] === 'number' ? ds.data[i].toFixed(2) : ds.data[i]) : 0);
                 });
                 csv += row.join(",") + "\n";
             }
@@ -169,6 +174,29 @@
             const link = document.createElement("a");
             link.href = encodeURI(csv);
             link.download = `simulation_data_${Date.now()}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // 그래프 이미지(PNG) 저장 공통 함수
+        function exportChartImage() {
+            if (!activeChart) { alert("저장할 차트가 없습니다."); return; }
+            
+            const srcCanvas = activeChart.canvas;
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = srcCanvas.width;
+            tempCanvas.height = srcCanvas.height;
+            const ctx = tempCanvas.getContext('2d');
+            
+            // 어두운 배경색 채우기 (이미지 저장시 글자 투명화 방지)
+            ctx.fillStyle = '#0F172A';
+            ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+            ctx.drawImage(srcCanvas, 0, 0);
+
+            const link = document.createElement("a");
+            link.href = tempCanvas.toDataURL("image/png");
+            link.download = `simulation_chart_${Date.now()}.png`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -208,7 +236,10 @@
                             <div class="control-card"><label>코일 감은 수 (N): <span id="nTxt">200</span> 회</label><input type="range" id="nIn" min="10" max="500" value="200" step="10"></div>
                             <div class="control-card"><label>자기장 세기 (B0): <span id="bTxt">3.0</span> T</label><input type="range" id="bIn" min="0.5" max="10.0" value="3.0" step="0.5"></div>
                         </div>
-                        <button class="action-btn csv-btn" onclick="exportCSV()">📥 차트 데이터 CSV 내보내기</button>
+                        <div class="export-btn-group">
+                            <button class="action-btn csv-btn" onclick="exportCSV()">📥 차트 데이터 CSV 내보내기</button>
+                            <button class="action-btn img-btn" onclick="exportChartImage()">🖼️ 그래프 이미지 저장 (PNG)</button>
+                        </div>
                     </div>
                 `;
                 initFaraday();
@@ -228,9 +259,10 @@
                             <div class="control-card"><label>자기장 (B): <span id="bBrakeTxt">5.0</span> T</label><input type="range" id="bBrakeIn" min="0.5" max="10.0" value="5.0" step="0.5"></div>
                             <div class="control-card"><label>도체 질량 (m): <span id="mTxt">2.0</span> kg</label><input type="range" id="mIn" min="0.5" max="10.0" value="2.0" step="0.5"></div>
                         </div>
-                        <div style="display: flex; gap: 1rem; width: 100%;">
-                            <button class="action-btn" style="flex: 2;" onclick="restartBraking()">재발사 (시뮬레이션 리셋)</button>
-                            <button class="action-btn csv-btn" style="flex: 1; margin-top: 0;" onclick="exportCSV()">📥 CSV 다운로드</button>
+                        <div class="export-btn-group">
+                            <button class="action-btn" style="flex: 2;" onclick="restartBraking()">🔄 재발사 (시뮬레이션 리셋)</button>
+                            <button class="action-btn csv-btn" style="flex: 1;" onclick="exportCSV()">📥 CSV 다운로드</button>
+                            <button class="action-btn img-btn" style="flex: 1;" onclick="exportChartImage()">🖼️ 그래프 저장 (PNG)</button>
                         </div>
                     </div>
                 `;
@@ -251,7 +283,10 @@
                             <div class="meter-box"><div class="meter-title">코일 발열 손실</div><div class="meter-bar-bg"><div class="meter-bar-fill" id="pLossBar" style="background:var(--accent-red);"></div></div><div class="meter-value" id="pLossVal">0 W</div></div>
                         </div>
                         <div class="chart-container"><canvas id="simChart"></canvas></div>
-                        <button class="action-btn csv-btn" onclick="exportCSV()">📥 차트 데이터 CSV 내보내기</button>
+                        <div class="export-btn-group">
+                            <button class="action-btn csv-btn" onclick="exportCSV()">📥 차트 데이터 CSV 내보내기</button>
+                            <button class="action-btn img-btn" onclick="exportChartImage()">🖼️ 그래프 이미지 저장 (PNG)</button>
+                        </div>
                     </div>
                 `;
                 initWPTChart();
@@ -306,7 +341,6 @@
             btnAuto.onclick = () => { isManual = false; btnAuto.classList.add('active'); btnManual.classList.remove('active'); vIn.disabled = false; };
             btnManual.onclick = () => { isManual = true; btnManual.classList.add('active'); btnAuto.classList.remove('active'); vIn.disabled = true; manualV = 0; };
 
-            // 좌표 스케일링 보정
             cvs.addEventListener('mousedown', (e) => {
                 if(!isManual) return;
                 const rect = cvs.getBoundingClientRect();
@@ -342,7 +376,6 @@
                 const N = parseFloat(nIn.value);
                 const B = parseFloat(bIn.value);
                 
-                // 프레임당 위치 변화량으로 드래그 속도 계산 (마우스를 멈추면 즉시 0 처리)
                 if (isManual) {
                     manualV = Math.abs(posX - lastPosX) * 20; 
                     lastPosX = posX;
@@ -367,7 +400,6 @@
                 const emf = Math.abs(currentSpeed * (N / 50) * B * fluxGradient * 0.15);
                 if (emf > maxEmf) maxEmf = emf;
 
-                // 렌더링
                 ctx.lineWidth = 1;
                 for (let i = -3; i <= 3; i++) {
                     ctx.strokeStyle = `rgba(6, 182, 212, ${0.1 + fluxGradient * 0.4})`;
